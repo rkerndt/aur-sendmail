@@ -36,7 +36,7 @@ install="${pkgname}.install"
 prepare(){
   # patch to fix tls.c compilation errors when built with openssl-1.1, taken
   # from Desbian here:
-  #https://bugs.debian.org/cgi-bin/bugreport.cgi?att=1;bug=828540;filename=sendmail-compile-against-openssl-1.1.0.patch;msg=24
+  #https://bugs.debian.org/cgi-bin/bugreport.cgi?att=1;bug=828540;filename=sendmail-compile-against-openssl-1.1.0.patch;msg=41
   cd ${srcdir}/${pkgname}-${pkgver}
   patch -p1 -i "${srcdir}/sendmail-compile-against-openssl-1.1.0.patch"
 
