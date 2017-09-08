@@ -22,30 +22,37 @@ backup=('etc/conf.d/sendmail'
 source=("ftp://ftp.sendmail.org/pub/${pkgname}/${pkgname}.${pkgver}.tar.gz"
         'sendmail.service'
         'sendmail.conf'
-        'sm-client.service')
+        'sm-client.service'
+        'sendmail-compile-against-openssl-1.1.0.patch')
 depends=('db'
          'cyrus-sasl')
 sha256sums=('24f94b5fd76705f15897a78932a5f2439a32b1a2fdc35769bb1a5f5d9b4db439'
             '380edeb289dfdfc5b0d4ea38df3a0fd35e6f83eeee76254ec7b3506eadfb674f'
             '39730f2be66bb1f1e6bc7fff61911db632ecf4b891d348df525abe2020274580'
-            'ecbd0a27e868d73d87fcfec292c19ea9479d0a8e9783788596d9add5e012218f')
+            'ecbd0a27e868d73d87fcfec292c19ea9479d0a8e9783788596d9add5e012218f'
+            '92aa2e6d81c3b27baf78df2c00775279e93303dedec2b9989c9c528413908ad4')
 install="${pkgname}.install"
 
-build(){
-  cd "$srcdir/${pkgname}-${pkgver}" || return 1
-  # Add support for SASL2
-  chmod +w devtools/OS/Linux
-  echo -e "define(\`confSTDIO_TYPE', \`portable')\nAPPENDDEF(\`conf_sendmail_ENVDEF', \`-DSTARTTLS')\nAPPENDDEF(\`conf_sendmail_LIBS', \`-lssl -lcrypto')\n">>devtools/OS/Linux
-  echo "APPENDDEF(\`conf_sendmail_ENVDEF', \`-DSASL=2')" >>devtools/OS/Linux
-  echo "APPENDDEF(\`conf_libmilter_ENVDEF', \`-DNETINET6')" >>devtools/OS/Linux
-  echo "APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv -lsasl2')" >>devtools/OS/Linux
-  echo "APPENDDEF(\`confLIBS', \`-ldb')" >>devtools/OS/Linux
-  echo "APPENDDEF(\`confMAPDEF', \`-DNEWDB')" >>devtools/OS/Linux
+prepare(){
+  # patch to fix tls.c compilation errors when built with openssl-1.1, taken
+  # from Desbian here:
+  #https://bugs.debian.org/cgi-bin/bugreport.cgi?att=1;bug=828540;filename=sendmail-compile-against-openssl-1.1.0.patch;msg=24
+  cd ${srcdir}/${pkgname}-${pkgver}
+  patch -p1 -i "${srcdir}/sendmail-compile-against-openssl-1.1.0.patch"
 
-  sed -i -e '58 s/^/dnl /' -e '59 s/^/dnl /' sendmail/Makefile.m4 # Sendmail expects user and group smmsp to exists before make install, this line prevent errors from that
+  # set build features in site.config.m4 for STARTTLS, SASL, and inet6
+  siteconfig="$srcdir/${pkgname}-${pkgver}/devtools/Site/site.config.m4"
+  touch ${siteconfig}
+  echo "APPENDDEF(\`conf_sendmail_ENVDEF', \`-DSTARTTLS')" >> ${siteconfig}
+  echo "APPENDDEF(\`confLIBS', \`-lssl -lcrypto')" >> ${siteconfig}
+  echo "APPENDDEF(\`confENVDEF', \`-DNETINET6')" >> ${siteconfig}
+  echo "APPENDDEF(\`conf_sendmail_ENVDEF', \`-DSASL=2')" >> ${siteconfig}
+  echo "APPENDDEF(\`conf_sendmail_LIBS', \`-lsasl2')" >> ${siteconfig}  
+}
+
+build(){
+  cd ${srcdir}/${pkgname}-${pkgver}
   ./Build || return 1
-  sed -i -e '449 s/-o [^}]*}[^}]*}//' -e '449 s/-m .{GBINMODE}/-m 755/' obj.*/sendmail/Makefile # Sendmail expects user and group smmsp to exists before make install, this line prevent errors from that
-  GROFF_NO_SGR=1 make -C doc/op op.txt op.ps
 }
 
 package(){
@@ -64,7 +71,7 @@ package(){
   cp -r cf $pkgdir/usr/share/sendmail-cf
   cp sendmail/aliases $pkgdir/etc/mail/aliases
   cp cf/cf/generic-linux.cf $pkgdir/etc/mail/sendmail.cf
-  cp doc/op/op.{ps,txt} $pkgdir/usr/share/doc/sendmail/
+#  cp doc/op/op.{ps,txt} $pkgdir/usr/share/doc/sendmail/
   install -D -m644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
   find $pkgdir -user bin -print | xargs chown root
   find $pkgdir -group bin -print | xargs chgrp root
