@@ -21,10 +21,12 @@ pkgbase = sendmail
 	source = sendmail.service
 	source = sendmail.conf
 	source = sm-client.service
+	source = sendmail-compile-against-openssl-1.1.0.patch
 	sha256sums = 24f94b5fd76705f15897a78932a5f2439a32b1a2fdc35769bb1a5f5d9b4db439
 	sha256sums = 380edeb289dfdfc5b0d4ea38df3a0fd35e6f83eeee76254ec7b3506eadfb674f
 	sha256sums = 39730f2be66bb1f1e6bc7fff61911db632ecf4b891d348df525abe2020274580
 	sha256sums = ecbd0a27e868d73d87fcfec292c19ea9479d0a8e9783788596d9add5e012218f
+	sha256sums = 92aa2e6d81c3b27baf78df2c00775279e93303dedec2b9989c9c528413908ad4
 
 pkgname = sendmail
 
