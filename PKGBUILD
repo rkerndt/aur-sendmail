@@ -6,7 +6,7 @@
 
 pkgname="sendmail"
 pkgver=8.15.2
-pkgrel=2
+pkgrel=3
 pkgdesc="The sendmail MTA"
 url="http://www.sendmail.org"
 arch=('i686' 'x86_64')
@@ -18,19 +18,22 @@ conflicts=('msmtp-mta'
            'opensmtpd')
 backup=('etc/conf.d/sendmail'
         'etc/mail/aliases'
-         'etc/mail/sendmail.cf')
+        'etc/mail/sendmail.cf'
+        'etc/pam.d/smtp')
 source=("ftp://ftp.sendmail.org/pub/${pkgname}/${pkgname}.${pkgver}.tar.gz"
         'sendmail.service'
         'sendmail.conf'
         'sm-client.service'
-        'sendmail-compile-against-openssl-1.1.0.patch')
+        'sendmail-compile-against-openssl-1.1.0.patch'
+        'smtp')
 depends=('db'
          'cyrus-sasl')
 sha256sums=('24f94b5fd76705f15897a78932a5f2439a32b1a2fdc35769bb1a5f5d9b4db439'
             '380edeb289dfdfc5b0d4ea38df3a0fd35e6f83eeee76254ec7b3506eadfb674f'
             '39730f2be66bb1f1e6bc7fff61911db632ecf4b891d348df525abe2020274580'
             'ecbd0a27e868d73d87fcfec292c19ea9479d0a8e9783788596d9add5e012218f'
-            '92aa2e6d81c3b27baf78df2c00775279e93303dedec2b9989c9c528413908ad4')
+            '92aa2e6d81c3b27baf78df2c00775279e93303dedec2b9989c9c528413908ad4'
+            'c19d98aebf1002f6e2bf2603735e4c65a30374baa1e9e6f06364af13278f0655')
 install="${pkgname}.install"
 
 prepare(){
@@ -62,6 +65,7 @@ package(){
     || return 1
   cp sendmail.service sm-client.service $pkgdir/usr/lib/systemd/system
   cp sendmail.conf $pkgdir/etc/conf.d/sendmail
+  cp smtp $pkgdir/etc/pam.d
   cd "$srcdir/${pkgname}-${pkgver}" || return 1
   make install DESTDIR="$pkgdir" || return 1
   make -C mail.local force-install DESTDIR="$pkgdir" || return 1
